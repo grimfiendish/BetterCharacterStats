@@ -2007,3 +2007,101 @@ function BCS:GetBlockValue()
 
 	return blockValue
 end
+
+function BCS:GetMissChanceRaw(wepSkill)
+	local _, ver = pcall(GetBuildInfo)
+	local diff = wepSkill - 315
+	local miss = 5
+
+	if ver == "1.17.2" then
+		miss = miss - (diff * 0.2) - BCS:GetHitRating()
+	else
+		if diff < -10 then
+			miss = miss - diff * 0.2;
+		else
+			miss = miss - diff * 0.1;
+		end
+
+		local hitChance = BCS:GetHitRating()
+		-- if skill diff < -10 then subtract one from +hit, if there is any +hit
+		if (diff < -10) and (hitChance > 0) then
+			hitChance = hitChance - 1
+		end
+		miss = miss - hitChance
+	end
+	return miss
+end
+
+function BCS:GetMissChance(wepSkill)
+	return max(0, min(BCS:GetMissChanceRaw(wepSkill), 60))
+end
+
+function BCS:GetDualWieldMissChance(wepSkill)
+	return max(0, min(BCS:GetMissChanceRaw(wepSkill) + 19, 60))
+end
+
+function BCS:GetGlanceChance(wepSkill)
+	return 10 + 15 * 2;
+end
+
+function BCS:GetGlanceReduction(wepSkill)
+	local _, ver = pcall(GetBuildInfo)
+	if ver == "1.17.2" then
+		return 65 + (wepSkill - 300) * 2
+	else
+		local diff = 315 - wepSkill;
+		local low = math.max(math.min(1.3 - 0.05 * diff, 0.91), 0.01);
+		local high = math.max(math.min(1.2 - 0.03 * diff, 0.99), 0.2);
+		return 100 * ((high - low) / 2 + low);
+	end
+end
+
+function BCS:GetDodgeChance(wepSkill)
+	return math.max(5 + (315 - wepSkill) * 0.1, 0);
+end
+
+function BCS:GetDualWieldCritCap(wepSkill)
+	local cap = 100 - self:GetDualWieldMissChance(wepSkill) - self:GetGlanceChance(wepSkill) - self:GetDodgeChance(wepSkill);
+	if (cap > 100) then
+		cap = 100;
+	end
+	if (cap < 0) then
+		cap = 0;
+	end
+	return cap;
+end
+
+function BCS:GetCritCap(wepSkill)
+	local cap = 100 - self:GetMissChance(wepSkill) - self:GetGlanceChance(wepSkill) - self:GetDodgeChance(wepSkill);
+	if (cap > 100) then
+		cap = 100;
+	end
+	if (cap < 0) then
+		cap = 0;
+	end
+	return cap;
+end
+
+function BCS:GetEffectiveBlockChance(leveldiff)
+	local block = GetBlockChance() - ((5 * leveldiff) * 0.04)
+	if block < 0 then
+		block = 0
+	end
+	return block
+end
+
+function BCS:GetEffectiveParryChance(leveldiff)
+	local parry = GetParryChance() - ((5 * leveldiff) * 0.04)
+	if parry < 0 then
+		parry = 0
+	end
+	return parry
+end
+
+function BCS:GetEffectiveDodgeChance(leveldiff)
+	local dodge = GetDodgeChance() - ((5 * leveldiff) * 0.04)
+	if dodge < 0 then
+		dodge = 0
+	end
+	return dodge
+end
