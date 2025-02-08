@@ -80,6 +80,13 @@ BCScache = BCScache or {
 		ranged = 0
 	}
 }
+
+-- From https://github.com/refaim/SortBags/blob/master/SortBags.lua#L6
+local function IsPlayingOnTurtleWoW()
+	-- https://github.com/refaim/Turtle-WoW-UI-Source/blob/d6137c2ebd291f10ce284e586a5733dd5141bef2/Interface/FrameXML/TargetFrame.xml#L183
+	return TargetHPText ~= nil and TargetHPPercText ~= nil
+end
+
 function BCS:GetPlayerAura(searchText, auraType)
 	if not auraType then
 		-- buffs
@@ -2013,7 +2020,7 @@ function BCS:GetMissChanceRaw(wepSkill)
 	local diff = wepSkill - 315
 	local miss = 5
 
-	if ver == "1.17.2" then
+	if IsPlayingOnTurtleWoW() then
 		miss = miss - (diff * 0.2) - BCS:GetHitRating()
 	else
 		if diff < -10 then
@@ -2046,7 +2053,7 @@ end
 
 function BCS:GetGlanceReduction(wepSkill)
 	local _, ver = pcall(GetBuildInfo)
-	if ver == "1.17.2" then
+	if IsPlayingOnTurtleWoW() then
 		return 65 + (wepSkill - 300) * 2
 	else
 		local diff = 315 - wepSkill;
