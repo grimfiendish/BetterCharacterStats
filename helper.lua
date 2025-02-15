@@ -1,4 +1,4 @@
---[[ 
+--[[
 
 This file isset up to be used outside of BCS as a standalone library.
 
@@ -8,25 +8,48 @@ HOW TO USE THIS FILE OUTSIDE OF BCS IN YOUR OWN ADDON:
 	2. In your addon's toc file, add this line
 		## OptionalDeps: BetterCharacterStats
 	3. Copy helper.lua into your addon (which you may rename) and add it into your toc file, like so:
-	   libs/BCSHelper.lua 
+	   libs/BCSHelper.lua
 	4. Make sure you have a lua file that loads before `helper.lua`, and in it define BCS_MIN_VERSION, like so:
 		BCS_MIN_VERSION="1.13.0"
 	
-Having done the above, you should be able to access BCS functions like `BCS:GetSpellPower` even if the user 
-does not have BCS installed. 
+Having done the above, you should be able to access BCS functions like `BCS:GetSpellPower` even if the user
+does not have BCS installed.
 
 If they do have BCS installed and it's newer than your BCS_MIN_VERSION then it'll use theirs.
 
 --]]
 
--- UnitStat(unit, XXX)...
+-- UnitStat(unit, STAT)...
 local STAT_STRENGTH = 1
 local STAT_AGILITY = 2
 local STAT_STAMINA = 3
-local STAT_INTELLECT = 4 
+local STAT_INTELLECT = 4
 local STAT_SPIRIT = 5
 
-function nvl(value, default)
+-- SetInventoryItem(unit, SLOT)
+local UNITSLOT_AMMO      =  0
+local UNITSLOT_HEAD      =  1
+local UNITSLOT_NECK      =  2
+local UNITSLOT_SHOULDER  =  3
+local UNITSLOT_SHIRT     =  4
+local UNITSLOT_CHEST     =  5
+local UNITSLOT_BELT      =  6
+local UNITSLOT_LEGS      =  7
+local UNITSLOT_FEET      =  8
+local UNITSLOT_WRIST     =  9
+local UNITSLOT_GLOVES    = 10
+local UNITSLOT_FINGER_1  = 11
+local UNITSLOT_FINGER_2  = 12
+local UNITSLOT_TRINKET_1 = 13
+local UNITSLOT_TRINKET_2 = 14
+local UNITSLOT_BACK      = 15
+local UNITSLOT_MAIN_HAND = 16
+local UNITSLOT_OFF_HAND  = 17
+local UNITSLOT_RANGED    = 18
+local UNITSLOT_TABARD    = 19
+
+
+local function nvl(value, default)
     return value ~= nil and value or default
 end
 
@@ -80,7 +103,7 @@ end
 if BCS ~= nil and BCS_MIN_VERSION ~= nil then
 	-- This file is set up to be usable outside of BetterCharacterStats
 	-- Here we check to see what version of BCS is installed relative to the version of `helper.lua` we've tucked away.
-	-- If it's less than our version then it implies they've got an out-of-date BCS and we'll need to use this one, which will be compatible with their old version. 
+	-- If it's less than our version then it implies they've got an out-of-date BCS and we'll need to use this one, which will be compatible with their old version.
 	-- If it's equal-or-higher, then we'll use the BCS version.
 	local realBCSversion = GetAddOnMetadata("BetterCharacterStats", "Version");
 	if BCS:isVersionNewer(realBCSversion, BCS_MIN_VERSION) >= 0 then
@@ -89,6 +112,9 @@ if BCS ~= nil and BCS_MIN_VERSION ~= nil then
 end
 
 BCS = BCS or {}
+if BCS.Debug == nil then
+	BCS.Debug = false
+end
 
 local BCS_Prefix = "BetterCharacterStatsTooltip"
 local BCS_Tooltip = getglobal("BetterCharacterStatsTooltip") or CreateFrame("GameTooltip", BCS_Prefix, nil, "GameTooltipTemplate")
@@ -229,9 +255,9 @@ function BCS:GetUnitHitRating(unit, hitOnly)
 		for slot=1, 19 do
 			if BCS_Tooltip:SetInventoryItem(unit, slot) then
 				local _, _, eqItemLink = strfind(GetInventoryItemLink(unit, slot), "(item:%d+:%d+:%d+:%d+)")
-				if eqItemLink then 
-					BCS_Tooltip:ClearLines() 
-					BCS_Tooltip:SetHyperlink(eqItemLink) 
+				if eqItemLink then
+					BCS_Tooltip:ClearLines()
+					BCS_Tooltip:SetHyperlink(eqItemLink)
 				end
 				local SET_NAME = nil
 				for line=1, BCS_Tooltip:NumLines() do
@@ -368,7 +394,7 @@ function BCS:GetUnitRangedHitRating(unit)
 	local auras_hit_debuff = (unit == "player") and BCScache["auras"].hit_debuff or 0
 	local ranged_hit = 0
 	if BCS.needScanGear or unit ~= "player" then
-		if BCS_Tooltip:SetInventoryItem(unit, 18) then
+		if BCS_Tooltip:SetInventoryItem(unit, UNITSLOT_RANGED) then
 			for line=1, BCS_Tooltip:NumLines() do
 				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
 				local text = left:GetText()
@@ -413,9 +439,9 @@ function BCS:GetUnitSpellHitRating(unit)
 		for slot=1, 19 do
 			if BCS_Tooltip:SetInventoryItem(unit, slot) then
 				local _, _, eqItemLink = strfind(GetInventoryItemLink(unit, slot), "(item:%d+:%d+:%d+:%d+)")
-				if eqItemLink then 
-					BCS_Tooltip:ClearLines() 
-					BCS_Tooltip:SetHyperlink(eqItemLink) 
+				if eqItemLink then
+					BCS_Tooltip:ClearLines()
+					BCS_Tooltip:SetHyperlink(eqItemLink)
 				end
 				local SET_NAME
 				for line=1, BCS_Tooltip:NumLines() do
@@ -547,7 +573,7 @@ function BCS:GetSpellHitRating()
 	return BCS:GetUnitSpellHitRating("player")
 end
 
-function BCS:GetCritChance() -- TODO XXX Surprised this doesn't check gear. Perhaps this is misnamed? TODO
+function BCS:GetCritChance()
 	local crit = 0
 	--scan spellbook
 	for tab=1, GetNumSpellTabs() do
@@ -582,7 +608,7 @@ function BCS:GetUnitRangedCritChance(unit)
 	local vallvl60 = 0
 	local classrate = 0
 	local auras_ranged_crit = 0
-	local talents_ranged_crit = 0
+	local gear_ranged_crit = 0
 	local talents_ranged_crit = 0
 
 	if class == "MAGE" then
@@ -633,13 +659,9 @@ function BCS:GetUnitRangedCritChance(unit)
 				end
 			end
 		end
-		if unit == "player" then
-			BCScache["talents"].ranged_crit = talents_ranged_crit
-		end
 	end
 
 	if BCS.needScanGear or unit ~= "player" then
-		gear_ranged_crit = 0
 		--scan gear
 		local Crit_Set_Bonus = {}
 		for slot=1, 19 do
@@ -680,9 +702,6 @@ function BCS:GetUnitRangedCritChance(unit)
 				end
 			end
 		end
-		if unit == "player" then
-			BCScache["gear"].ranged_crit = gear_ranged_crit
-		end
 	end
 	if BCS.needScanAuras and unit == "player" then
 		--ony head
@@ -708,7 +727,7 @@ function BCS:GetUnitRangedCritChance(unit)
 			for i=1, GetNumPartyMembers() do
 				local _, partyClass = UnitClass("party"..i)
 				if partyClass == "DRUID" then
-					if BCS_Tooltip:SetInventoryItem("party"..i, 18) and UnitCreatureType("party"..i) == "Beast" then
+					if BCS_Tooltip:SetInventoryItem("party"..i, UNITSLOT_RANGED) and UnitCreatureType("party"..i) == "Beast" then
 						for line=1, BCS_Tooltip:NumLines() do
 							local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
 							local text = left:GetText()
@@ -724,9 +743,6 @@ function BCS:GetUnitRangedCritChance(unit)
 				end
 			end
 		end
-		if unit == "player" then
-			BCScache["auras"].ranged_crit = auras_ranged_crit
-		end
 	end
 
 	if class == "MAGE" then
@@ -738,6 +754,12 @@ function BCS:GetUnitRangedCritChance(unit)
 	end
 
 	crit = crit + gear_ranged_crit + talents_ranged_crit + auras_ranged_crit
+
+	if unit == "player" then
+		BCScache["auras"].ranged_crit = auras_ranged_crit
+		BCScache["gear"].ranged_crit = gear_ranged_crit
+		BCScache["talents"].ranged_crit = talents_ranged_crit
+	end
 
 	return crit
 end
@@ -756,7 +778,7 @@ function BCS:GetUnitSpellCritChance(unit)
 	local _, intellect = UnitStat(unit, STAT_INTELLECT)
 	local _, class = UnitClass(unit)
 	
-	-- values from vmangos core 
+	-- values from vmangos core
 	local playerLevel = UnitLevel(unit)
 	if class == "MAGE" then
 		spell_crit = 3.7 + intellect / (14.77 + .65 * playerLevel)
@@ -807,7 +829,7 @@ function BCS:GetUnitSpellCritChance(unit)
 				end
 			end
 		end
-		if BCS_Tooltip:SetInventoryItem(unit, 16) then
+		if BCS_Tooltip:SetInventoryItem(unit, UNITSLOT_MAIN_HAND) then
 			for line=1, BCS_Tooltip:NumLines() do
 				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
 				local text = left:GetText()
@@ -833,7 +855,7 @@ function BCS:GetUnitSpellCritChance(unit)
 		_, _, crit_from_aura = BCS:GetPlayerAura(L["Moonkin Aura"])
 		if crit_from_aura then
 			auras_spell_crit = auras_spell_crit + 3
-			if BCS:GetPlayerAura(L["Moonkin Form"]) and BCS_Tooltip:SetInventoryItem(unit, 18) then
+			if BCS:GetPlayerAura(L["Moonkin Form"]) and BCS_Tooltip:SetInventoryItem(unit, UNITSLOT_RANGED) then
 				for line=1, BCS_Tooltip:NumLines() do
 					local text = getglobal(BCS_Prefix .. "TextLeft" .. line):GetText()
 					if text then
@@ -848,7 +870,7 @@ function BCS:GetUnitSpellCritChance(unit)
 				for i=1, GetNumPartyMembers() do
 					local _, partyClass = UnitClass("party"..i)
 					if partyClass == "DRUID" then
-						if BCS_Tooltip:SetInventoryItem("party"..i, 18) then
+						if BCS_Tooltip:SetInventoryItem("party"..i, UNITSLOT_RANGED) then
 							for line=1, BCS_Tooltip:NumLines() do
 								local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
 								local text = left:GetText()
@@ -903,9 +925,6 @@ function BCS:GetUnitSpellCritChance(unit)
 		if crit_from_aura then
 			auras_spell_crit = auras_spell_crit - tonumber(crit_from_aura)
 		end
-		if unit == "player" then
-			BCScache["auras"].spell_crit = auras_spell_crit
-		end
 	end
 
 	-- scan talents
@@ -928,12 +947,14 @@ function BCS:GetUnitSpellCritChance(unit)
 				end
 			end
 		end
-		if unit == player then
-			BCScache["talents"].spell_crit = talents_spell_crit
-		end
 	end
 
 	spell_crit = spell_crit + talents_spell_crit + gear_spell_crit + auras_spell_crit
+
+	if unit == "player" then
+		BCScache["auras"].spell_crit = auras_spell_crit
+		BCScache["talents"].spell_crit = talents_spell_crit
+	end
 
 	return spell_crit
 end
@@ -1156,7 +1177,7 @@ function BCS:GetSpellCritFromClass(class)
 				end
 			end
 		end
-		-- scan gear 
+		-- scan gear
 		if BCS.needScanGear then
 			-- t1 set gives + 2% crit to holy and 25% to prayer of healing
 			BCScache["gear"].priest_holy_spells = 0
@@ -1264,8 +1285,14 @@ end
 
 local imp_inner_fire = nil -- XXX Why is this local var defined outside the function but only used inside the function?
 local spiritual_guidance = nil -- XXX Why is this local var defined outside the function but only used inside the function?
-function BCS:GetUnitSpellPower(school, unit) -- unit is second for backward compatibility
+function BCS:GetUnitSpellPower(unit, school)
 	if school then
+		if not tContains({"arcane","fire","frost","holy","nature","shadow"}) then
+			if BCS.Debug then
+				DEFAULT_CHAT_FRAME:AddMessage("Unknown spell type ["..nvl(school,"nil").."] sent to GetUnitSpellPower.")
+			end
+			return nil
+		end
 		local school_spell_power = 0;
 		--scan gear
 		if BCS.needScanGear or unit ~= "player" then
@@ -1444,7 +1471,7 @@ function BCS:GetUnitSpellPower(school, unit) -- unit is second for backward comp
 				end
 			end
 			-- SetHyperLink doesnt show temporary enhancements, have to use SetInventoryItem
-			if BCS_Tooltip:SetInventoryItem(unit, 16) then
+			if BCS_Tooltip:SetInventoryItem(unit, UNITSLOT_MAIN_HAND) then
 				for line=1, BCS_Tooltip:NumLines() do
 					local text = getglobal(BCS_Prefix .. "TextLeft" .. line):GetText()
 					if text then
@@ -1600,7 +1627,7 @@ function BCS:GetUnitSpellPower(school, unit) -- unit is second for backward comp
 end
 
 function BCS:GetSpellPower(school)
-	return BCS:GetUnitSpellPower(school, "player")
+	return BCS:GetUnitSpellPower("player", school)
 end
 
 local ironClad = nil -- XXX Why is this local var defined outside the function but only used inside the function?
@@ -1680,7 +1707,7 @@ function BCS:GetUnitHealingPower(unit)
 						if value then
 							gear_heal_power = gear_heal_power + tonumber(value)
 						end
-						-- Enchanted Armor Kit (Leatherwotking) 
+						-- Enchanted Armor Kit (Leatherwotking)
 						-- Arcanum of Focus (Head/Legs enchant)
 						-- already included in GetSpellPower
 
@@ -1698,7 +1725,7 @@ function BCS:GetUnitHealingPower(unit)
 			end
 		end
 		-- SetHyperLink doesnt show temporary enhancements, have to use SetInventoryItem
-		if BCS_Tooltip:SetInventoryItem(unit, 16) then
+		if BCS_Tooltip:SetInventoryItem(unit, UNITSLOT_MAIN_HAND) then
 			for line=1, BCS_Tooltip:NumLines() do
 				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
 				local text = left:GetText()
@@ -1807,7 +1834,7 @@ end
 
 local waterShield = nil
 function BCS:GetUnitManaRegen(unit)
-	local base = GetRegenMPPerSpirit()
+	local base = GetUnitRegenMPPerSpirit(unit)
 	local casting = 0
 	local mp5 = 0
 	local auras_mp5 = 0
@@ -1891,7 +1918,7 @@ function BCS:GetUnitManaRegen(unit)
 			end
 		end
 		-- SetHyperLink doesnt show temporary enhancements, have to use SetInventoryItem
-		if BCS_Tooltip:SetInventoryItem(unit, 16) then
+		if BCS_Tooltip:SetInventoryItem(unit, UNITSLOT_MAIN_HAND) then
 			for line=1, BCS_Tooltip:NumLines() do
 				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
 				local text = left:GetText()
@@ -1932,17 +1959,17 @@ function BCS:GetUnitManaRegen(unit)
 		if mp5FromAura then
 			auras_mp5 = auras_mp5 + 10
 		end
-		--Epiphany 
+		--Epiphany
 		_, _, mp5FromAura = BCS:GetPlayerAura(L["Restores (%d+) mana per 5 sec."])
 		if mp5FromAura then
 			auras_mp5 = auras_mp5 + tonumber(mp5FromAura)
 		end
-		--Nightfin Soup 
+		--Nightfin Soup
 		_, _, mp5FromAura = BCS:GetPlayerAura(L["Regenerating (%d+) Mana every 5 seconds."])
 		if mp5FromAura then
 			auras_mp5 = auras_mp5 + tonumber(mp5FromAura)*2.5 -- had to double the mp5FromAura because the item is a true mp5 tick
 		end
-		--Mageblood Potion 
+		--Mageblood Potion
 		_, _, mp5FromAura = BCS:GetPlayerAura(L["Regenerate (%d+) mana per 5 sec."])
 		if mp5FromAura then
 			auras_mp5 = auras_mp5 + tonumber(mp5FromAura)
@@ -2024,7 +2051,7 @@ function BCS:GetManaRegen()
 end
 
 --Weapon Skill code adapted from https://github.com/pepopo978/BetterCharacterStats
-function BCS:GetWeaponSkill(skillName) -- XXX Player only
+function BCS:GetWeaponSkill(skillName) -- Player only
 	-- loop through skills
 	local skillIndex = 1
 	while true do
@@ -2041,7 +2068,7 @@ function BCS:GetWeaponSkill(skillName) -- XXX Player only
 	end
 end
 
-function BCS:GetWeaponSkillForWeaponType(weaponType) -- XXX Player only
+function BCS:GetWeaponSkillForWeaponType(weaponType) -- Player only
 	if weaponType == "Daggers" then
 		return BCS:GetWeaponSkill("Daggers")
 	elseif weaponType == "One-Handed Swords" then
@@ -2325,7 +2352,7 @@ function BCS:GetUnitEffectiveBlockChance(unit, leveldiff)
 	if block < 0 then
 		block = 0
 	end
-	return 
+	return
 end
 
 function BCS:GetEffectiveBlockChance(leveldiff)
