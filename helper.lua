@@ -112,9 +112,7 @@ if BCS ~= nil and BCS_MIN_VERSION ~= nil then
 end
 
 BCS = BCS or {}
-if BCS.Debug == nil then
-	BCS.Debug = false
-end
+BCS.Debug = BCS.Debug or false
 
 local BCS_Prefix = "BetterCharacterStatsTooltip"
 local BCS_Tooltip = getglobal("BetterCharacterStatsTooltip") or CreateFrame("GameTooltip", BCS_Prefix, nil, "GameTooltipTemplate")
@@ -289,6 +287,8 @@ function BCS:GetUnitHitRating(unit, hitOnly)
 		if unit == "player" then
 			BCScache["gear"].hit = gear_hit
 		end
+	elseif unit == "player" then -- We did not recalculate, so using cache
+		gear_hit = BCScache["gear"].hit
 	end
 
 	if BCS.needScanAuras and unit == "player" then
@@ -322,6 +322,9 @@ function BCS:GetUnitHitRating(unit, hitOnly)
 			BCScache["auras"].hit = auras_hit
 			BCScache["auras"].hit_debuff = auras_hit_debuff
 		end
+	elseif unit == "player" then -- We did not recalculate, so using cache
+		auras_hit = BCScache["auras"].hit
+		auras_hit_debuff = BCScache["auras"].hit_debuff
 	end
 
 	if BCS.needScanTalents and unit == "player" then
@@ -374,6 +377,8 @@ function BCS:GetUnitHitRating(unit, hitOnly)
 		if unit == "player" then
 			BCScache["talents"].hit = talents_hit
 		end
+	elseif unit == "player" then -- We did not recalculate, so using cache
+			talents_hit = BCScache["talents"].hit
 	end
 	hit = talents_hit + gear_hit + auras_hit
 	if not hitOnly then
@@ -406,14 +411,15 @@ function BCS:GetUnitRangedHitRating(unit)
 					end
 				end
 			end
+		end	
+		if unit == "player" then
+			BCScache["gear"].ranged_hit = ranged_hit
 		end
+	elseif unit == "player" then -- We did not recalculate, so using cache
+		ranged_hit = BCScache["gear"].ranged_hit
 	end
 	local ranged_hit = BCS:GetUnitHitRating(unit, true) + ranged_hit - auras_hit_debuff
 	if ranged_hit < 0 then ranged_hit = 0 end
-	
-	if unit == "player" then
-		BCScache["gear"].ranged_hit = ranged_hit
-	end
 	
 	return ranged_hit
 end
@@ -472,6 +478,8 @@ function BCS:GetUnitSpellHitRating(unit)
 		if unit == "player" then
 			BCScache["gear"].spell_hit = gear_spell_hit
 		end
+	elseif unit == "player" then -- We did not recalculate, so using cache
+		gear_spell_hit = BCScache["gear"].spell_hit
 	end
 	if BCS.needScanTalents or unit ~= "player" then
 		-- scan talents
@@ -549,6 +557,13 @@ function BCS:GetUnitSpellHitRating(unit)
 			BCScache["talents"].spell_hit_shadow = spell_hit_shadow
 			BCScache["talents"].spell_hit_holy = spell_hit_holy
 		end
+	elseif unit == "player" then -- We did not recalculate, so using cache
+		talents_spell_hit = BCScache["talents"].spell_hit
+		spell_hit_fire = BCScache["talents"].spell_hit_fire
+		spell_hit_frost = BCScache["talents"].spell_hit_frost
+		spell_hit_arcane = BCScache["talents"].spell_hit_arcane
+		spell_hit_shadow = BCScache["talents"].spell_hit_shadow
+		spell_hit_holy = BCScache["talents"].spell_hit_holy
 	end
 	-- buffs
 	if BCS.needScanAuras and unit == "player" then
@@ -564,8 +579,12 @@ function BCS:GetUnitSpellHitRating(unit)
 		if unit == "player" then
 			BCScache["auras"].spell_hit = auras_spell_hit
 		end
+	elseif unit == "player" then -- We did not recalculate, so using cache
+		auras_spell_hit = BCScache["auras"].spell_hit
 	end
+
 	hit = gear_spell_hit + talents_spell_hit + auras_spell_hit
+
 	return hit, spell_hit_fire, spell_hit_frost, spell_hit_arcane, spell_hit_shadow, spell_hit_holy
 end
 
@@ -659,6 +678,12 @@ function BCS:GetUnitRangedCritChance(unit)
 				end
 			end
 		end
+		if unit == "player" then
+			BCScache["talents"].ranged_crit = talents_ranged_crit
+		end
+
+	elseif unit == "player" then -- We did not recalculate, so using cache
+		talents_ranged_crit = BCScache["talents"].ranged_crit
 	end
 
 	if BCS.needScanGear or unit ~= "player" then
@@ -702,6 +727,11 @@ function BCS:GetUnitRangedCritChance(unit)
 				end
 			end
 		end
+		if unit == "player" then
+			BCScache["gear"].ranged_crit = gear_ranged_crit
+		end
+	elseif unit == "player" then -- We did not recalculate, so using cache
+		gear_ranged_crit = BCScache["gear"].ranged_crit
 	end
 	if BCS.needScanAuras and unit == "player" then
 		--ony head
@@ -743,6 +773,11 @@ function BCS:GetUnitRangedCritChance(unit)
 				end
 			end
 		end
+		if unit == "player" then
+			BCScache["auras"].ranged_crit = auras_ranged_crit
+		end
+	elseif unit == "player" then -- We did not recalculate, so using cache
+		auras_ranged_crit = BCScache["auras"].ranged_crit
 	end
 
 	if class == "MAGE" then
@@ -754,12 +789,6 @@ function BCS:GetUnitRangedCritChance(unit)
 	end
 
 	crit = crit + gear_ranged_crit + talents_ranged_crit + auras_ranged_crit
-
-	if unit == "player" then
-		BCScache["auras"].ranged_crit = auras_ranged_crit
-		BCScache["gear"].ranged_crit = gear_ranged_crit
-		BCScache["talents"].ranged_crit = talents_ranged_crit
-	end
 
 	return crit
 end
@@ -844,6 +873,8 @@ function BCS:GetUnitSpellCritChance(unit)
 		if unit == "player" then
 			BCScache["gear"].spell_crit = gear_spell_crit
 		end
+	elseif unit == "player" then -- We did not recalculate, so using cache
+		gear_spell_crit = BCScache["gear"].spell_crit
 	end
 
 	if BCS.needScanAuras and unit == "player" then
@@ -925,6 +956,11 @@ function BCS:GetUnitSpellCritChance(unit)
 		if crit_from_aura then
 			auras_spell_crit = auras_spell_crit - tonumber(crit_from_aura)
 		end
+		if unit == "player" then
+			BCScache["auras"].spell_crit = auras_spell_crit
+		end
+	elseif unit == "player" then -- We did not recalculate, so using cache
+		auras_spell_crit = BCScache["auras"].spell_crit
 	end
 
 	-- scan talents
@@ -947,14 +983,14 @@ function BCS:GetUnitSpellCritChance(unit)
 				end
 			end
 		end
+		if unit == "player" then
+			BCScache["talents"].spell_crit = talents_spell_crit
+		end
+	elseif unit == "player" then -- We did not recalculate, so using cache
+		talents_spell_crit= BCScache["talents"].spell_crit
 	end
 
 	spell_crit = spell_crit + talents_spell_crit + gear_spell_crit + auras_spell_crit
-
-	if unit == "player" then
-		BCScache["auras"].spell_crit = auras_spell_crit
-		BCScache["talents"].spell_crit = talents_spell_crit
-	end
 
 	return spell_crit
 end
@@ -1283,13 +1319,13 @@ function BCS:GetSpellCritFromClass(class)
 	end
 end
 
-local imp_inner_fire = nil -- XXX Why is this local var defined outside the function but only used inside the function?
-local spiritual_guidance = nil -- XXX Why is this local var defined outside the function but only used inside the function?
 function BCS:GetUnitSpellPower(unit, school)
+	local imp_inner_fire = nil
+	local spiritual_guidance = nil
 	if school then
 		if not tContains({"arcane","fire","frost","holy","nature","shadow"}) then
 			if BCS.Debug then
-				DEFAULT_CHAT_FRAME:AddMessage("Unknown spell type ["..nvl(school,"nil").."] sent to GetUnitSpellPower.")
+				DEFAULT_CHAT_FRAME:AddMessage("Unknown spell type ["..nvl(school,"nil").."] sent to GetUnitSpellPower. Ignoring.")
 			end
 			return nil
 		end
@@ -1320,7 +1356,7 @@ function BCS:GetUnitSpellPower(unit, school)
 			if unit == "player" then
 				BCScache["gear"][string.lower(school)] = school_spell_power
 			end
-		else
+		elseif unit == "player" then -- We did not recalculate, so using cache
 			school_spell_power = BCScache["gear"][string.lower(school)]
 		end
 
@@ -1499,6 +1535,26 @@ function BCS:GetUnitSpellPower(unit, school)
 					end
 				end
 			end
+			
+			if unit == "player" then
+				BCScache["gear"].damage_and_healing = gear_spell_power
+				BCScache["gear"].only_damage = gear_spell_damage_only
+				BCScache["gear"].arcane =  gear_arcane
+				BCScache["gear"].fire =    gear_fire
+				BCScache["gear"].frost =   gear_frost
+				BCScache["gear"].holy =    gear_holy
+				BCScache["gear"].nature =  gear_nature
+				BCScache["gear"].shadow =  gear_shadow
+			end
+		elseif unit == "player" then -- We did not recalculate, so using cache
+			gear_spell_power = BCScache["gear"].damage_and_healing
+			gear_spell_damage_only = BCScache["gear"].only_damage
+			gear_arcane = BCScache["gear"].arcane 
+			gear_fire = BCScache["gear"].fire
+			gear_frost = BCScache["gear"].frost
+			gear_holy = BCScache["gear"].holy
+			gear_nature = BCScache["gear"].nature
+			gear_shadow = BCScache["gear"].shadow
 		end
 
 		if BCS.needScanTalents and unit == "player" then
@@ -1529,6 +1585,17 @@ function BCS:GetUnitSpellPower(unit, school)
 					end
 				end
 			end
+
+			if spiritual_guidance ~= nil then
+				local _, spirit = UnitStat(unit, STAT_SPIRIT)
+				talents_spell_power = talents_spell_power + floor(((spiritual_guidance / 100) * spirit))
+			end
+			
+			if unit == "player" then
+				BCScache["talents"].damage_and_healing = talents_spell_power
+			end
+		elseif unit == "player" then -- We did not recalculate, so using cache
+			talents_spell_power = BCScache["talents"].damage_and_healing
 		end
 		
 		if BCS.needScanAuras and unit == "player" then
@@ -1570,6 +1637,15 @@ function BCS:GetUnitSpellPower(unit, school)
 				end
 				auras_spell_damage_only = auras_spell_damage_only + spellPowerFromAura
 			end
+			
+			if unit == "player" then
+				BCScache["auras"].damage_and_healing = auras_spell_power
+				BCScache["auras"].only_damage = auras_spell_damage_only
+			end
+
+		elseif unit == "player" then -- We did not recalculate, so using cache
+			auras_spell_power = BCScache["auras"].damage_and_healing
+			auras_spell_damage_only = BCScache["auras"].only_damage
 		end
 		local secondaryPower = 0
 		local secondaryPowerName = ""
@@ -1599,28 +1675,9 @@ function BCS:GetUnitSpellPower(unit, school)
 			secondaryPowerName = L.SPELL_SCHOOL_SHADOW
 		end
 
-		if spiritual_guidance ~= nil then
-			local _, spirit = UnitStat(unit, STAT_SPIRIT)
-			talents_spell_power = talents_spell_power + floor(((spiritual_guidance / 100) * spirit))
-		end
-
 		-- Spell Power and Spell Damage are kept separate so that Spell Healing can be added to Spell Power as desired.
 		total_spell_power = gear_spell_power + talents_spell_power + auras_spell_power
 		total_spell_damage = auras_spell_damage_only + gear_spell_damage_only
-		
-		if unit == "player" then
-			BCScache["gear"].damage_and_healing = gear_spell_power
-			BCScache["gear"].only_damage = gear_spell_damage_only
-			BCScache["gear"].arcane =  gear_arcane
-			BCScache["gear"].fire =    gear_fire
-			BCScache["gear"].frost =   gear_frost
-			BCScache["gear"].holy =    gear_holy
-			BCScache["gear"].nature =  gear_nature
-			BCScache["gear"].shadow =  gear_shadow
-			BCScache["talents"].damage_and_healing = talents_spell_power
-			BCScache["auras"].damage_and_healing = auras_spell_power
-			BCScache["auras"].only_damage = auras_spell_damage_only
-		end
 
 		return total_spell_power, secondaryPower, secondaryPowerName, total_spell_damage
 	end
@@ -1630,8 +1687,6 @@ function BCS:GetSpellPower(school)
 	return BCS:GetUnitSpellPower("player", school)
 end
 
-local ironClad = nil -- XXX Why is this local var defined outside the function but only used inside the function?
-local toughness = nil -- XXX Why is this local var defined outside the function but only used inside the function?
 --this is stuff that gives ONLY healing, we count stuff that gives both damage and healing in GetSpellPower
 function BCS:GetUnitHealingPower(unit)
 	local healPower = 0
@@ -1641,8 +1696,8 @@ function BCS:GetUnitHealingPower(unit)
 	local healPower_Set_Bonus = {}
 	--talents
 	if BCS.needScanTalents and unit == "player" then
-		ironClad = nil
-		toughness = nil
+		local ironClad = nil
+		local toughness = nil
 		for tab=1, GetNumTalentTabs() do
 			for talent=1, GetNumTalents(tab) do
 				BCS_Tooltip:SetTalent(tab, talent)
@@ -1668,7 +1723,26 @@ function BCS:GetUnitHealingPower(unit)
 				end
 			end
 		end
+
+		if ironClad ~= nil then
+			local base = UnitArmor(unit)
+			local _, agility = UnitStat(unit, STAT_AGILITY)
+			local armorFromGear = base - (agility * 2)
+			-- Iron Clad is calculated on raw armor without toughness bonus, base armor includes the bonus
+			if toughness ~= nil then
+				armorFromGear = armorFromGear / (1 + toughness/100)
+			end
+			talents_heal_power = floor(((ironClad / 100) * armorFromGear))
+		end
+
+		if unit == "player" then
+			BCScache["talents"].healing = talents_heal_power
+		end
+
+	elseif unit == "player" then
+		talents_heal_power = BCScache["talents"].healing
 	end
+
 	if BCS.needScanGear or unit ~= "player" then
 		--scan gear
 		for slot=1, 19 do
@@ -1737,7 +1811,15 @@ function BCS:GetUnitHealingPower(unit)
 				end
 			end
 		end
+
+		if unit == "player" then
+			BCScache["gear"].healing = gear_heal_power
+		end
+
+	elseif unit == "player" then
+		gear_heal_power = BCScache["gear"].healing
 	end
+
 	-- buffs
 	local treebonus = nil
 	if BCS.needScanAuras then
@@ -1776,26 +1858,14 @@ function BCS:GetUnitHealingPower(unit)
 		if healPowerFromAura then
 			auras_heal_power = auras_heal_power + tonumber(healPowerFromAura)
 		end
-	end
-	
-	if ironClad ~= nil then
-		local base = UnitArmor(unit)
-		local _, agility = UnitStat(unit, STAT_AGILITY)
-		local armorFromGear = base - (agility * 2)
-		-- Iron Clad is calculate on raw armor without toughness bonus, base armor includes the bonus
-		if toughness ~= nil then
-			armorFromGear = armorFromGear / (1 + toughness/100)
+		if unit == "player" then
+			BCScache["auras"].healing = auras_heal_power
 		end
-		talents_heal_power = floor(((ironClad / 100) * armorFromGear))
+	elseif unit == "player" then
+		auras_heal_power = BCScache["auras"].healing
 	end
 
 	healPower = gear_heal_power + auras_heal_power + talents_heal_power
-
-	if unit == "player" then
-		BCScache["auras"].healing = auras_heal_power
-		BCScache["gear"].healing = gear_heal_power
-		BCScache["talents"].healing = talents_heal_power
-	end
 
 	return healPower, treebonus, talents_heal_power
 end
@@ -1863,6 +1933,11 @@ function BCS:GetUnitManaRegen(unit)
 				end
 			end
 		end
+		if unit == "player" then
+			BCScache["talents"].casting = talents_casting
+		end
+	elseif unit == "player" then -- We did not recalculate, so using cache
+		talents_casting = BCScache["talents"].casting
 	end
 
 	if BCS.needScanGear or unit ~= "player" then
@@ -1938,6 +2013,13 @@ function BCS:GetUnitManaRegen(unit)
 				end
 			end
 		end
+		if unit == "player" then
+			BCScache["gear"].mp5 = gear_mp5
+			BCScache["gear"].casting = gear_casting
+		end
+	elseif unit == "player" then -- We did not recalculate, so using cache
+		gear_mp5= BCScache["gear"].mp5
+		gear_casting= BCScache["gear"].casting
 	end
 
 	-- buffs
@@ -2020,6 +2102,14 @@ function BCS:GetUnitManaRegen(unit)
 			base = base + (base * (tonumber(value) / 100))
 			auras_casting = auras_casting + tonumber(castingFromAura)
 		end
+
+		if unit == "player" then
+			BCScache["auras"].mp5 = auras_mp5
+			BCScache["auras"].casting = auras_casting
+		end
+	elseif unit == "player" then -- We did not recalculate, so using cache
+		auras_mp5 = BCScache["auras"].mp5
+		auras_casting = BCScache["auras"].casting
 	end
 
 	casting = auras_casting + talents_casting + gear_casting
@@ -2035,14 +2125,6 @@ function BCS:GetUnitManaRegen(unit)
 		casting = 100
 	end
 	
-	if unit == "player" then
-		BCScache["auras"].mp5 = auras_mp5
-		BCScache["auras"].casting = auras_casting
-		BCScache["gear"].mp5 = gear_mp5
-		BCScache["gear"].casting = gear_casting
-		BCScache["talents"].casting = talents_casting
-	end
-
 	return base, casting, mp5
 end
 
@@ -2104,8 +2186,8 @@ function BCS:GetWeaponSkillForWeaponType(weaponType) -- Player only
 	return BCS:GetWeaponSkill("Unarmed")
 end
 
-function BCS:GetUnitItemTypeForSlot(unit, slot)
-	local _, _, id = string.find(GetInventoryItemLink(unit, GetInventorySlotInfo(slot)) or "", "(item:%d+:%d+:%d+:%d+)");
+function BCS:GetItemTypeForSlot(slot) -- Player only
+	local _, _, id = string.find(GetInventoryItemLink("player", GetInventorySlotInfo(slot)) or "", "(item:%d+:%d+:%d+:%d+)");
 	if not id then
 		return
 	end
@@ -2113,10 +2195,6 @@ function BCS:GetUnitItemTypeForSlot(unit, slot)
 	local _, _, _, _, _, itemType = GetItemInfo(id);
 
 	return itemType
-end
-
-function BCS:GetItemTypeForSlot(slot)
-	return BCS:GetUnitItemTypeForSlot("player", slot)
 end
 
 function BCS:GetMHWeaponSkill() -- Player only
@@ -2152,7 +2230,6 @@ function BCS:GetRangedWeaponSkill() -- Player only
 end
 
 --https://us.forums.blizzard.com/en/wow/t/block-value-formula/283718/18
-local enhancingTotems = nil
 function BCS:GetUnitBlockValue(unit)
 	local blockValue = 0
 	local _, strength = UnitStat(unit, STAT_STRENGTH)
@@ -2186,6 +2263,7 @@ function BCS:GetUnitBlockValue(unit)
 		end
 	end
 	if unit == "player" then
+		local enhancingTotems = nil
 		-- scan talents
 		for tab=1, GetNumTalentTabs() do
 			for talent=1, GetNumTalents(tab) do
@@ -2242,11 +2320,11 @@ function BCS:GetBlockValue()
 	return BCS:GetUnitBlockValue("player")
 end
 
-function BCS:GetUnitMissChanceRaw(unit, wepSkill)
+function BCS:GetMissChanceRaw(wepSkill) -- player only
 	local _, ver = pcall(GetBuildInfo)
 	local diff = wepSkill - 315
 	local miss = 5
-	local hitChance = BCS:GetUnitHitRating(unit)
+	local hitChance = BCS:GetUnitHitRating("player")
 
 	if IsPlayingOnTurtleWoW() then
 		miss = miss - (diff * 0.2) - hitChance
@@ -2266,35 +2344,19 @@ function BCS:GetUnitMissChanceRaw(unit, wepSkill)
 	return miss
 end
 
-function BCS:GetMissChanceRaw(wepSkill)
-	return BCS:GetUnitMissChanceRaw("player", wepSkill)
+function BCS:GetMissChance(wepSkill) -- player only
+	return max(0, min(BCS:GetMissChanceRaw(wepSkill), 60))
 end
 
-function BCS:GetUnitMissChance(unit, wepSkill)
-	return max(0, min(BCS:GetUnitMissChanceRaw(unit, wepSkill), 60))
+function BCS:GetDualWieldMissChance(wepSkill) -- player only
+	return max(0, min(BCS:GetMissChanceRaw(wepSkill) + 19, 60))
 end
 
-function BCS:GetMissChance(wepSkill)
-	return BCS:GetUnitMissChance("player", wepSkill)
-end
-
-function BCS:GetUnitDualWieldMissChance(unit, wepSkill)
-	return max(0, min(BCS:GetUnitMissChanceRaw(unit, wepSkill) + 19, 60))
-end
-
-function BCS:GetDualWieldMissChance(wepSkill)
-	return BCS:GetUnitDualWieldMissChance("player", wepSkill)
-end
-
-function BCS:GetUnitGlanceChance(unit, wepSkill)
+function BCS:GetGlanceChance(wepSkill) -- player only
 	return 10 + 15 * 2;
 end
 
-function BCS:GetGlanceChance(wepSkill)
-	return BCS:GetUnitGlanceChance("player", wepSkill)
-end
-
-function BCS:GetUnitGlanceReduction(unit, wepSkill)
+function BCS:GetGlanceReduction(wepSkill) -- player only
 	if IsPlayingOnTurtleWoW() then
 		return 65 + (wepSkill - 300) * 2
 	else
@@ -2305,20 +2367,12 @@ function BCS:GetUnitGlanceReduction(unit, wepSkill)
 	end
 end
 
-function BCS:GetGlanceReduction(wepSkill)
-	return  BCS:GetUnitGlanceReduction("player", wepSkill)
+function BCS:GetDodgeChance(wepSkill) -- player only
+	return math.max(5 + (315 - wepSkill) * 0.1, 0)
 end
 
-function BCS:GetUnitDodgeChance(unit, wepSkill)
-	return math.max(5 + (315 - wepSkill) * 0.1, 0);
-end
-
-function BCS:GetDodgeChance(wepSkill)
-	return BCS:GetUnitDodgeChance("player", wepSkill)
-end
-
-function BCS:GetUnitDualWieldCritCap(unit, wepSkill)
-	local cap = 100 - self:GetUnitDualWieldMissChance(unit, wepSkill) - self:GetUnitGlanceChance(unit, wepSkill) - self:GetUnitDodgeChance(unit, wepSkill);
+function BCS:GetDualWieldCritCap(wepSkill) -- player only
+	local cap = 100 - self:GetDualWieldMissChance(wepSkill) - self:GetGlanceChance(wepSkill) - self:GetDodgeChance(wepSkill);
 	if (cap > 100) then
 		cap = 100;
 	end
@@ -2328,12 +2382,8 @@ function BCS:GetUnitDualWieldCritCap(unit, wepSkill)
 	return cap;
 end
 
-function BCS:GetDualWieldCritCap(wepSkill)
-	return BCS:GetUnitDualWieldCritCap("player", wepSkill)
-end
-
-function BCS:GetUnitCritCap(unit, wepSkill)
-	local cap = 100 - self:GetUnitMissChance(unit, wepSkill) - self:GetUnitGlanceChance(unit, wepSkill) - self:GetUnitDodgeChance(unit, wepSkill);
+function BCS:GetCritCap(wepSkill) -- player only
+	local cap = 100 - self:GetMissChance(wepSkill) - self:GetGlanceChance(wepSkill) - self:GetDodgeChance(wepSkill);
 	if (cap > 100) then
 		cap = 100;
 	end
@@ -2343,11 +2393,7 @@ function BCS:GetUnitCritCap(unit, wepSkill)
 	return cap;
 end
 
-function BCS:GetCritCap(wepSkill)
-	return BCS:GetUnitCritCap("player", wepSkill)
-end
-
-function BCS:GetUnitEffectiveBlockChance(unit, leveldiff)
+function BCS:GetEffectiveBlockChance(leveldiff) -- player only
 	local block = GetBlockChance() - ((5 * leveldiff) * 0.04)
 	if block < 0 then
 		block = 0
@@ -2355,15 +2401,7 @@ function BCS:GetUnitEffectiveBlockChance(unit, leveldiff)
 	return
 end
 
-function BCS:GetEffectiveBlockChance(leveldiff)
-	return BCS:GetUnitEffectiveBlockChance("player", leveldiff)
-end
-
-function BCS:GetEffectiveBlockChance(leveldiff)
-	return BCS:GetUnitEffectiveBlockChance("player", leveldiff)
-end
-
-function BCS:GetEffectiveParryChance(leveldiff)
+function BCS:GetEffectiveParryChance(leveldiff) -- player only
 	local parry = GetParryChance() - ((5 * leveldiff) * 0.04)
 	if parry < 0 then
 		parry = 0
@@ -2371,14 +2409,10 @@ function BCS:GetEffectiveParryChance(leveldiff)
 	return parry
 end
 
-function BCS:GetUnitEffectiveDodgeChance(unit, leveldiff)
-	local dodge = self.GetUnitDodgeChance(unit) - ((5 * leveldiff) * 0.04)
+function BCS:GetEffectiveDodgeChance(leveldiff) -- player only
+	local dodge = GetDodgeChance(unit) - ((5 * leveldiff) * 0.04)
 	if dodge < 0 then
 		dodge = 0
 	end
 	return dodge
-end
-
-function BCS:GetEffectiveDodgeChance(leveldiff)
-	return BCS:GetUnitEffectiveDodgeChance("player", leveldiff)
 end
