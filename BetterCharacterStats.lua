@@ -635,6 +635,7 @@ function BCS:SetHitRating(statFrame, ratingType)
 				GameTooltip:AddLine(this.tooltipSubtext, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
 
 				if spell_hit_fire > 0 then
+ 					GameTooltip:AddLine(format(L.HIT_FIRE, spell_hit + spell_hit_fire))
 				end
 				if spell_hit_frost > 0 then
 					GameTooltip:AddLine(format(L.HIT_FROST, spell_hit + spell_hit_frost))
