@@ -21,7 +21,6 @@ If they do have BCS installed and it's newer than your BCS_MIN_VERSION then it'l
 
 BCS = BCS or {}
 BCS.Debug = BCS.Debug or false
-BCS.Debug = true -- TODO remove
 
 -- UnitStat(unit, STAT)...
 local STAT_STRENGTH      =  1
