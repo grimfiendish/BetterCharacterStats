@@ -19,12 +19,16 @@ If they do have BCS installed and it's newer than your BCS_MIN_VERSION then it'l
 
 --]]
 
+BCS = BCS or {}
+BCS.Debug = BCS.Debug or false
+BCS.Debug = true -- TODO remove
+
 -- UnitStat(unit, STAT)...
-local STAT_STRENGTH = 1
-local STAT_AGILITY = 2
-local STAT_STAMINA = 3
-local STAT_INTELLECT = 4
-local STAT_SPIRIT = 5
+local STAT_STRENGTH      =  1
+local STAT_AGILITY       =  2
+local STAT_STAMINA       =  3
+local STAT_INTELLECT     =  4
+local STAT_SPIRIT        =  5
 
 -- SetInventoryItem(unit, SLOT)
 local UNITSLOT_AMMO      =  0
@@ -110,9 +114,6 @@ if BCS ~= nil and BCS_MIN_VERSION ~= nil then
 		return
 	end
 end
-
-BCS = BCS or {}
-BCS.Debug = BCS.Debug or false
 
 local BCS_Prefix = "BetterCharacterStatsTooltip"
 local BCS_Tooltip = getglobal("BetterCharacterStatsTooltip") or CreateFrame("GameTooltip", BCS_Prefix, nil, "GameTooltipTemplate")
@@ -1323,7 +1324,7 @@ function BCS:GetUnitSpellPower(unit, school)
 	local imp_inner_fire = nil
 	local spiritual_guidance = nil
 	if school then
-		if not tContains({"arcane","fire","frost","holy","nature","shadow"}) then
+		if not tContains({"arcane","fire","frost","holy","nature","shadow"}, string.lower(school)) then
 			if BCS.Debug then
 				DEFAULT_CHAT_FRAME:AddMessage("Unknown spell type ["..nvl(school,"nil").."] sent to GetUnitSpellPower. Ignoring.")
 			end
@@ -1359,7 +1360,6 @@ function BCS:GetUnitSpellPower(unit, school)
 		elseif unit == "player" then -- We did not recalculate, so using cache
 			school_spell_power = BCScache["gear"][string.lower(school)]
 		end
-
 		return school_spell_power
 	else
 		local total_spell_power = 0
@@ -1535,7 +1535,6 @@ function BCS:GetUnitSpellPower(unit, school)
 					end
 				end
 			end
-			
 			if unit == "player" then
 				BCScache["gear"].damage_and_healing = gear_spell_power
 				BCScache["gear"].only_damage = gear_spell_damage_only
@@ -1874,7 +1873,7 @@ function BCS:GetHealingPower()
 	return BCS:GetUnitHealingPower("player")
 end
 
-local function GetUnitRegenMPPerSpirit(unit)
+function BCS:GetUnitRegenMPPerSpirit(unit)
 	local addvalue = 0
 	local _, spirit = UnitStat(unit, STAT_SPIRIT)
 	local _, class = UnitClass(unit)
@@ -1899,12 +1898,12 @@ local function GetUnitRegenMPPerSpirit(unit)
 end
 
 local function GetRegenMPPerSpirit()
-	return GetUnitRegenMPPerSpirit("player")
+	return BCS:GetUnitRegenMPPerSpirit("player")
 end
 
 local waterShield = nil
 function BCS:GetUnitManaRegen(unit)
-	local base = GetUnitRegenMPPerSpirit(unit)
+	local base = BCS:GetUnitRegenMPPerSpirit(unit)
 	local casting = 0
 	local mp5 = 0
 	local auras_mp5 = 0
@@ -2124,7 +2123,7 @@ function BCS:GetUnitManaRegen(unit)
 	if casting > 100 then
 		casting = 100
 	end
-	
+
 	return base, casting, mp5
 end
 
@@ -2398,7 +2397,7 @@ function BCS:GetEffectiveBlockChance(leveldiff) -- player only
 	if block < 0 then
 		block = 0
 	end
-	return
+	return block
 end
 
 function BCS:GetEffectiveParryChance(leveldiff) -- player only
