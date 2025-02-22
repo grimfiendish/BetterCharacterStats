@@ -1323,7 +1323,7 @@ function BCS:GetUnitSpellPower(unit, school)
 	local imp_inner_fire = nil
 	local spiritual_guidance = nil
 	if school then
-		if not tContains({"arcane","fire","frost","holy","nature","shadow"}, string.lower(school)) then
+		if not tContains({"Arcane","Fire","Frost","Holy","Nature","Shadow"}, school) then
 			if BCS.Debug then
 				DEFAULT_CHAT_FRAME:AddMessage("Unknown spell type ["..nvl(school,"nil").."] sent to GetUnitSpellPower. Ignoring.")
 			end
@@ -1900,13 +1900,14 @@ local function GetRegenMPPerSpirit()
 	return BCS:GetUnitRegenMPPerSpirit("player")
 end
 
-local waterShield = nil
 function BCS:GetUnitManaRegen(unit)
+	local waterShield = nil
 	local base = BCS:GetUnitRegenMPPerSpirit(unit)
 	local casting = 0
 	local mp5 = 0
 	local auras_mp5 = 0
 	local gear_mp5 = 0
+	local auras_casting = 0
 	local gear_casting = 0
 	local talents_casting = 0
 	local mp5_Set_Bonus = {}
@@ -2022,8 +2023,6 @@ function BCS:GetUnitManaRegen(unit)
 
 	-- buffs
 	if BCS.needScanAuras and unit == "player" then
-		auras_casting = 0
-		auras_mp5 = 0
 		-- improved Shadowform
 		for tab=1, GetNumSpellTabs() do
 			local _, _, offset, numSpells = GetSpellTabInfo(tab);
