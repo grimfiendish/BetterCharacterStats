@@ -1754,6 +1754,11 @@ function BCS:GetUnitHealingPower(unit)
 				for line=1, BCS_Tooltip:NumLines() do
 					local text = getglobal(BCS_Prefix .. "TextLeft" .. line):GetText()
 					if text then
+						-- Atiesh (party healing version); See https://www.wowhead.com/classic/item=22631/atiesh-greatstaff-of-the-guardian
+						local _,_, value = strfind(text, "Equip: Increases healing done by magical spells and effects of all party members within 30 yards by up to (%d+).")
+						if value then
+							--gear_heal_power = gear_heal_power + tonumber(value)
+						end
 						local _,_, value = strfind(text, L["Equip: Increases healing done by spells and effects by up to (%d+)."])
 						if value then
 							gear_heal_power = gear_heal_power + tonumber(value)
