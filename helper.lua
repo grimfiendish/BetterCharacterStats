@@ -22,6 +22,8 @@ If they do have BCS installed and it's newer than your BCS_MIN_VERSION then it'l
 BCS = BCS or {}
 BCS.Debug = BCS.Debug or false
 
+BCS.BCS_SUPPORTS_TARGET = true
+
 -- UnitStat(unit, STAT)...
 local STAT_STRENGTH      =  1
 local STAT_AGILITY       =  2
@@ -1918,7 +1920,6 @@ function BCS:GetUnitManaRegen(unit)
 	local mp5_Set_Bonus = {}
 
 	if BCS.needScanTalents and unit == "player" then
-		waterShield = nil
 		for tab=1, GetNumTalentTabs() do
 			for talent=1, GetNumTalents(tab) do
 				BCS_Tooltip:SetTalent(tab, talent)
