@@ -22,8 +22,6 @@ If they do have BCS installed and it's newer than your BCS_MIN_VERSION then it'l
 BCS = BCS or {}
 BCS.Debug = BCS.Debug or false
 
-BCS.BCS_SUPPORTS_TARGET = true
-
 -- UnitStat(unit, STAT)...
 local STAT_STRENGTH      =  1
 local STAT_AGILITY       =  2
@@ -105,7 +103,7 @@ function BCS:isVersionNewer(p1, p2)
     return 0
 end
 
-if BCS ~= nil and BCS_MIN_VERSION ~= nil then
+if BCS ~= nil and BCS.BCS_SUPPORTS_TARGET and BCS.BCS_SUPPORTS_TARGET == true and BCS_MIN_VERSION ~= nil then
 	-- This file is set up to be usable outside of BetterCharacterStats
 	-- Here we check to see what version of BCS is installed relative to the version of `helper.lua` we've tucked away.
 	-- If it's less than our version then it implies they've got an out-of-date BCS and we'll need to use this one, which will be compatible with their old version.
@@ -115,6 +113,8 @@ if BCS ~= nil and BCS_MIN_VERSION ~= nil then
 		return
 	end
 end
+
+BCS.BCS_SUPPORTS_TARGET = true -- Feature marker not used in BCS directly but instead as an indicator it can be used by other libraries
 
 local BCS_Prefix = "BetterCharacterStatsTooltip"
 local BCS_Tooltip = getglobal("BetterCharacterStatsTooltip") or CreateFrame("GameTooltip", BCS_Prefix, nil, "GameTooltipTemplate")
