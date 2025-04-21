@@ -91,6 +91,7 @@ BCS["L"] = {
 	["Equip: Increases healing done by spells and effects by up to (%d+)."] = ITEM_SPELL_TRIGGER_ONEQUIP .. " Increases healing done by spells and effects by up to (%d+).",
 
 	-- auras
+    ["Critical strike chance increased by (%d+)%%."] = "Critical strike chance increased by (%d+)%%.",
 	["Chance to hit increased by (%d)%%."] = "Chance to hit increased by (%d)%%.",
 	["Magical damage dealt is increased by up to (%d+)."] = "Magical damage dealt is increased by up to (%d+).",
 	["Healing done by magical spells is increased by up to (%d+)."] = "Healing done by magical spells is increased by up to (%d+).",
@@ -115,7 +116,7 @@ BCS["L"] = {
 	["Spell hit chance increased by (%d+)%%."] = "Spell hit chance increased by (%d+)%%.",
 	["Agility increased by 25, Critical hit chance increases by (%d)%%."] = "Agility increased by 25, Critical hit chance increases by (%d)%%.",
 	["Increases chance for a melee, ranged, or spell critical by (%d+)%% and all attributes by %d+."] = "Increases chance for a melee, ranged, or spell critical by (%d+)%% and all attributes by %d+.",
-	["Melee critical-hit chance reduced by (%d+)%%.\r\nSpell critical-hit chance reduced by (%d+)%%."] = "Melee critical-hit chance reduced by (%d+)%%.\r\nSpell critical-hit chance reduced by (%d+)%%.",
+	["Spell critical-hit chance reduced by (%d+)%%."] = "Spell critical-hit chance reduced by (%d+)%%.",
 	["Increases critical chance of spells by 10%%, melee and ranged by 5%% and grants 140 attack power. 120 minute duration."] = "Increases critical chance of spells by 10%%, melee and ranged by 5%% and grants 140 attack power. 120 minute duration.",
 	["Critical strike chance with spells and melee attacks increased by (%d+)%%."] = "Critical strike chance with spells and melee attacks increased by (%d+)%%.",
 	["Increases ranged and melee critical chance by (%d+)%%."] = "Increases ranged and melee critical chance by (%d+)%%.",
@@ -326,6 +327,7 @@ BCS["L"] = {
 
 	["Healing %+(%d+)"] = "Healing %+(%d+)",
 	["Healing done is increased by up to (%d+)"] = "Healing done is increased by up to (%d+)",
+	["Healing Bonus increased by (%d+)"] = "Healing Bonus increased by (%d+)",
 
 	["Increases damage and healing done by magical spells and effects by up to (%d+)."] = "Increases damage and healing done by magical spells and effects by up to (%d+).",
 	["Magical damage dealt by spells and abilities is increased by up to (%d+)"] = "Magical damage dealt by spells and abilities is increased by up to (%d+)",

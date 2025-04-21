@@ -57,7 +57,6 @@ function BCS:DebugTrace(start, limit)
 			i = length
 		end
 	end
-
 end
 
 function BCS:Print(message)
@@ -96,40 +95,8 @@ function BCS:OnLoad()
 	end)
 end
 
-local function PostHookFunction(original, hook)
-	return function(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
-		original(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
-		hook(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
-	end
-end
-
 -- there is less space for player character model with this addon, zoom out and move it up slightly
-local z, x, y = -0.2, 0, 0.1
-function BCS_PaperDollFrame_OnEvent(event, unit)
-	if (event == "PLAYER_ENTERING_WORLD") then
-		CharacterModelFrame:SetPosition(0, 0, 0)
-		CharacterModelFrame:SetUnit("player")
-		CharacterModelFrame:SetPosition(z, x, y)
-		return
-	end
-	if (unit and unit == "player") then
-		if (event == "UNIT_MODEL_CHANGED") then
-			CharacterModelFrame:SetPosition(0, 0, 0)
-			CharacterModelFrame:SetUnit("player")
-			CharacterModelFrame:SetPosition(z, x, y)
-			return
-		end
-	end
-end
-
-function BCS_PaperDollFrame_OnShow()
-	CharacterModelFrame:SetPosition(0, 0, 0)
-	CharacterModelFrame:SetUnit("player")
-	CharacterModelFrame:SetPosition(z, x, y)
-end
-
-PaperDollFrame_OnShow = PostHookFunction(PaperDollFrame_OnShow, BCS_PaperDollFrame_OnShow)
-PaperDollFrame_OnEvent = PostHookFunction(PaperDollFrame_OnEvent, BCS_PaperDollFrame_OnEvent)
+CharacterModelFrame:SetHeight(CharacterModelFrame:GetHeight() - 19)
 
 local function strsplit(delimiter, subject)
 	if not subject then
@@ -145,7 +112,7 @@ end
 
 -- Scan stuff depending on event, but make sure to scan everything when addon is loaded
 function BCS:OnEvent()
-	--[[if BCS.Debug then
+	if BCS.Debug then
 		local t = {
 			E = event,
 			arg1 = arg1 or "nil",
@@ -155,7 +122,7 @@ function BCS:OnEvent()
 			arg5 = arg5 or "nil",
 		}
 		tinsert(BCS.DebugStack, t)
-	end]]
+	end
 	if event == "CHAT_MSG_ADDON" and arg1 == "bcs" then
 		BCS.needScanAuras = true
 		local type, player, amount = strsplit(",", arg2)
@@ -202,15 +169,6 @@ function BCS:OnEvent()
 	elseif event == "ADDON_LOADED" and arg1 == "BetterCharacterStats" then
 		BCSFrame:UnregisterEvent("ADDON_LOADED")
 
-		local _, race = UnitRace("player")
-		if race == "Gnome" then
-			y = 0
-		elseif race == "Dwarf" then
-			y = 0.05
-		elseif race == "Troll" then
-			y = 0.15
-		end
-
 		BCS.needScanGear = true
 		BCS.needScanTalents = true
 		BCS.needScanAuras = true
@@ -226,8 +184,18 @@ end
 
 --sending messages
 local sender = CreateFrame("Frame", "BCSsender")
-sender:RegisterEvent("PLAYER_AURAS_CHANGED")
-sender:RegisterEvent("CHAT_MSG_ADDON")
+
+-- only listen for aura changed if you are already a tree
+-- this was causing performance issues
+if BCS:GetPlayerAura(L["Tree of Life Aura"]) then
+	sender:RegisterEvent("PLAYER_AURAS_CHANGED")
+end
+
+-- only listen to CHAT_MSG_ADDON if you are potentially a healer
+local _, class = UnitClass("player")
+if class == "DRUID" or class == "PRIEST" or class == "PALADIN" or class == "SHAMAN" then
+	sender:RegisterEvent("CHAT_MSG_ADDON")
+end
 sender:SetScript("OnEvent", function()
 	if not (UnitInParty("player") or UnitInRaid("player")) then
 		return
@@ -236,8 +204,14 @@ sender:SetScript("OnEvent", function()
 		local player = UnitName("player")
 		if event == "PLAYER_AURAS_CHANGED" then
 			if BCS:GetPlayerAura(L["Tree of Life Aura"]) then
-				SendAddonMessage("bcs", "TREE"..","..player, "PARTY")
-				--BCS:Print("sent tree request")
+				-- throttle to every 5 min to avoid spamming
+				if (this.tick or 1) > GetTime() then
+					return
+				else
+					this.tick = GetTime() + 300
+				end
+
+				SendAddonMessage("bcs", "TREE" .. "," .. player, "PARTY")
 			end
 		end
 		if event == "CHAT_MSG_ADDON" and arg1 == "bcs" then
@@ -245,7 +219,7 @@ sender:SetScript("OnEvent", function()
 			if name ~= player then
 				local _, treebonus = BCS:GetHealingPower()
 				if not amount and type == "TREE" and treebonus then
-					SendAddonMessage("bcs", "TREE"..","..player..","..treebonus, "PARTY")
+					SendAddonMessage("bcs", "TREE" .. "," .. player .. "," .. treebonus, "PARTY")
 					--BCS:Print("sent tree response, amount="..treebonus)
 				end
 			end
@@ -261,14 +235,15 @@ function BCS:OnShow()
 end
 
 -- debugging / profiling
---local avgV = {}
---local avg = 0
+local avgV = {}
+local avg = 0
 function BCS:UpdateStats()
-	--[[if BCS.Debug then
+	local beginTime
+	if BCS.Debug then
 		local e = event or "nil"
 		BCS:Print("Update due to " .. e)
+		beginTime = debugprofilestop()
 	end
-	local beginTime = debugprofilestop()]]
 
 	BCS:UpdatePaperdollStats("PlayerStatFrameLeft", IndexLeft)
 	BCS:UpdatePaperdollStats("PlayerStatFrameRight", IndexRight)
@@ -276,16 +251,17 @@ function BCS:UpdateStats()
 	BCS.needScanTalents = false
 	BCS.needScanAuras = false
 	BCS.needScanSkills = false
-	--[[local timeUsed = debugprofilestop()-beginTime
-	table.insert(avgV, timeUsed)
-	avg = 0
 
-	for i,v in ipairs(avgV) do
-		avg = avg + v
+	if BCS.Debug then
+		local timeUsed = debugprofilestop() - beginTime
+		table.insert(avgV, timeUsed)
+		avg = 0
+		for i, v in ipairs(avgV) do
+			avg = avg + v
+		end
+		avg = avg / getn(avgV)
+		BCS:Print(format("Average: %d (%d results), Exact: %d", avg, getn(avgV), timeUsed))
 	end
-	avg = avg / getn(avgV)
-
-	BCS:Print(format("Average: %d (%d results), Exact: %d", avg, getn(avgV), timeUsed))]]
 end
 
 local function BCS_AddTooltip(statFrame, tooltipExtra)
@@ -564,9 +540,9 @@ function BCS:SetSpellPower(statFrame, school)
 		label:SetText(L["SPELL_SCHOOL_" .. strupper(school)])
 
 		if fromSchool > 0 then
-			statFrame.tooltip = format(L.SPELL_SCHOOL_SECONDARY_TOOLTIP , school, total,  base + dmgOnly, fromSchool)
+			statFrame.tooltip = format(L.SPELL_SCHOOL_SECONDARY_TOOLTIP, school, total, base + dmgOnly, fromSchool)
 		else
-			statFrame.tooltip = format(L.SPELL_SCHOOL_TOOLTIP , school, total)
+			statFrame.tooltip = format(L.SPELL_SCHOOL_TOOLTIP, school, total)
 		end
 		statFrame.tooltipSubtext = format(L.SPELL_SCHOOL_TOOLTIP_SUB, strlower(school))
 	else
@@ -1094,7 +1070,7 @@ function BCS:SetBlock(statFrame, leveldiff)
 	local tooltipExtra
 
 	if blockChance > 0 then
-		tooltipExtra = L.BLOCK_VALUE..BCS:GetBlockValue()
+		tooltipExtra = L.BLOCK_VALUE .. BCS:GetBlockValue()
 	end
 
 	label:SetText(L.BLOCK_COLON)
